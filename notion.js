@@ -6,14 +6,13 @@ class NotionAPI {
     constructor() {
         this.token = CONFIG.NOTION_TOKEN;
         this.databaseId = CONFIG.TASK_DATABASE_ID;
+        this.notificationDatabaseId = CONFIG.NOTIFICATION_DATABASE_ID;
     }
 
     
     async getTasks() {
         const today = new Date()
         const formattedDate =  today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
-
-        console.log("今日" + formattedDate + "のタスク一覧を送信します");
 
         const response = await axios.post(
 
@@ -40,37 +39,6 @@ class NotionAPI {
 
         return response.data;
 
-    }
-
-    async updateDiscordMessageId(pageId,messageId){
-        await axios.patch(
-            `https://api.notion.com/v1/pages/${pageId}`,
-            {
-                properties:{
-                    DiscordMessageId:{
-                        rich_text:[
-                            {
-                                text:{
-                                    content:messageId
-                                }
-                        
-                            }
-                            
-                        ]
-                    }
-                }
-            },
-            
-            {
-                headers:{
-                    Authorization:`Bearer ${this.token}`,
-                    "Notion-Version":"2022-06-28",
-                    "Content-Type":"application/json"
-                }
-            }
-        )
-
-        console.log("Notion更新成功");
     }
 
     async getDepartment(departmentId){
@@ -105,7 +73,7 @@ class NotionAPI {
                             }
                         ]
                     },
-                    "DiscordchannelId":{
+                    "DiscordChannelId":{
                         rich_text:[
                             {
                                 text:{
@@ -122,6 +90,15 @@ class NotionAPI {
                                 }
                             }
                         ]
+                    },
+                    "TaskPageId":{
+                        rich_text:[
+                            {
+                                text:{
+                                    content:data.taskPageId
+                                }
+                            }
+                        ]
                     }
                 }
             },
@@ -134,6 +111,62 @@ class NotionAPI {
             }
         )
     return response.data;
+    }
+
+    async getDiscordNotifications(){
+        const response = await axios.post(
+           `https://api.notion.com/v1/databases/${this.notificationDatabaseId}/query`,
+            {},
+            {
+                headers:{
+                    Authorization:`Bearer ${this.token}`,
+                    "Notion-Version":"2022-06-28",
+                    "Content-Type":"application/json" 
+                }
+            }
+        )
+        return response.data;
+    }
+
+    async updateNotificationParticipantCount(pageId, count){
+        const response = await axios.patch(
+            `https://api.notion.com/v1/pages/${pageId}`,
+            {
+                properties:{
+                    "参加人数":{
+                                number:count                    
+                    }
+                }
+            },
+            {
+                headers:{
+                    Authorization:`Bearer ${this.token}`,
+                    "Notion-Version":"2022-06-28",
+                    "Content-Type":"application/json" 
+                }
+            }
+
+                )
+    }
+    
+    async updateTaskCurrentCount(pageId, count){
+        const response = await axios.patch(
+            `https://api.notion.com/v1/pages/${pageId}`,
+            {
+                properties:{
+                    "現在人数":{
+                        number:count
+                    }
+                }
+            },
+            {
+                headers:{
+                    Authorization:`Bearer ${this.token}`,
+                    "Notion-Version":"2022-06-28",
+                    "Content-Type":"application/json"
+                }
+            }
+        )
     }
 }
 
