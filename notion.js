@@ -9,22 +9,28 @@ class NotionAPI {
         this.notificationDatabaseId = CONFIG.NOTIFICATION_DATABASE_ID;
     }
 
-    
-    async getTasks() {
-        const today = new Date()
-        const formattedDate =  today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
-
+    async getTasks(formattedDate) {
         const response = await axios.post(
 
             `https://api.notion.com/v1/databases/${this.databaseId}/query`,
 
             {
                 filter:{
+                    and:[
+                {
                     "property":"取り組み予定日時",
                     "date":{
                         "equals": formattedDate
                     }
+                },
+                {
+                    "property": "状態",
+                    "status": {
+                    "equals": "未完了"
+                    }
                 }
+                ]
+            }
             },
 
             {
@@ -168,6 +174,21 @@ class NotionAPI {
             }
         )
     }
-}
 
+    async deleteDiscordNortifications(pageId){
+        const response = await axios.patch(
+            `https://api.notion.com/v1/pages/${pageId}`,
+            {
+                data:{
+                    archived:true
+                },
+                headers:{
+                    Authorization: `Bearer ${this.token}`,
+                    "Notion-Version":"2022-06-28",
+                    "Content-Type":"application/json"   
+                } 
+            }
+        )
+    }
+}
 module.exports = NotionAPI;
