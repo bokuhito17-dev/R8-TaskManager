@@ -153,9 +153,6 @@ async function eveningReminder(){
     }
 }
 
-
-
-async function main() {
     async function main() {
 
     const mode = process.argv[2];
@@ -189,7 +186,5 @@ async function main() {
 }
 
 main();
-}
 
-main();
 
