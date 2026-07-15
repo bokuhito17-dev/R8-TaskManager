@@ -7,6 +7,7 @@ class NotionAPI {
         this.token = CONFIG.NOTION_TOKEN;
         this.databaseId = CONFIG.TASK_DATABASE_ID;
         this.notificationDatabaseId = CONFIG.NOTIFICATION_DATABASE_ID;
+        this.userdatabaseId = CONFIG.USER_DATABASE_ID
     }
 
     async getTasks(formattedDate) {
@@ -175,20 +176,116 @@ class NotionAPI {
         )
     }
 
-    async deleteDiscordNortifications(pageId){
+    async getDiscordUsers(userId){
+        const response = await axios.post(
+            `https://api.notion.com/v1/databases/${this.userdatabaseId}/query`,
+            {
+                filter: {
+                    property: "DiscordUserId",
+                    rich_text: {
+                        equals: userId
+                    }
+                }
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${this.token}`,
+                    "Notion-Version": "2022-06-28",
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        return response.data;
+    }
+
+    async addParticipantsinTaskDatabase(pageId,userIds){
         const response = await axios.patch(
             `https://api.notion.com/v1/pages/${pageId}`,
             {
-                data:{
-                    archived:true
-                },
+                properties:{
+                    "参加者":{
+                        relation:userIds.map(id=>({
+                            id:id
+                        }))
+                    }
+                }
+            },
+            {
                 headers:{
                     Authorization: `Bearer ${this.token}`,
                     "Notion-Version":"2022-06-28",
-                    "Content-Type":"application/json"   
-                } 
+                    "Content-Type":"application/json"
+                }
             }
-        )
+        );
+        return response.data;
+    }
+
+    async removeAvailableDate(userPageId, todayString){
+        // Fetch the page to get current multi_select values
+        const resp = await axios.get(
+            `https://api.notion.com/v1/pages/${userPageId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${CONFIG.NOTION_TOKEN}`,
+                    "Notion-Version": "2022-06-28"
+                }
+            }
+        );
+
+        const user = resp.data;
+        const dates = user.properties["来れる日"].multi_select || [];
+        const newDates = dates.filter(date => date.name !== todayString);
+
+        await axios.patch(
+            `https://api.notion.com/v1/pages/${userPageId}`,
+            {
+                properties:{
+                    "来れる日":{
+                        multi_select: newDates.map(date => ({ name: date.name }))
+                    }
+                }
+            },
+            {
+                headers:{
+                    Authorization:`Bearer ${CONFIG.NOTION_TOKEN}`,
+                    "Notion-Version":"2022-06-28",
+                    "Content-Type":"application/json"
+                }
+            }
+        );
+    }
+    async getUserAvailable (pageId){
+    const response = await axios.get(
+        `https://api.notion.com/v1/pages/${pageId}`,
+        {
+            headers:{
+                Authorization:`Bearer ${this.token}`,
+                "Notion-Version":"2022-06-28",
+                "Content-Type":"application/json"
+            }
+        }
+    );
+
+    return response.data;
+}
+
+    async deleteDiscordNotification(pageId){
+        const response = await axios.patch(
+            `https://api.notion.com/v1/pages/${pageId}`,
+            {
+                archived:true
+            },
+            {
+                headers:{
+                    Authorization: `Bearer ${this.token}`,
+                    "Notion-Version":"2022-06-28",
+                    "Content-Type":"application/json"
+                }
+            }
+        );
+        return response.data;
     }
 }
 module.exports = NotionAPI;

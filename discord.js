@@ -78,7 +78,20 @@ class DiscordAPI {
 
     return 0;
     }
+    
+    async getReactionUsers(channelId, messageId, emojiName) {
 
+    const response = await axios.get(
+        `https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emojiName)}`,
+        {
+            headers: {
+                Authorization: `Bot ${this.token}`
+            }
+        }
+    );
+
+    return response.data;
+    }
 }
 
 module.exports = DiscordAPI;

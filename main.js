@@ -2,11 +2,18 @@ const NotionAPI = require("./notion");
 const DiscordAPI = require("./discord");
 const Task = require("./task");
 const CONFIG = require("./config");
+const axios = require("axios");
 
 const DEBUG = true;
 
-const today = new Date()
-const formattedDate = today.getFullYear() + "年" + String(today.getMonth() + 1).padStart(2, "0") + "月" + String(today.getDate()).padStart(2, "0")+ "日";
+const today = new Date();
+
+const formattedDate =
+    today.getFullYear()
+    + "-"
+    + String(today.getMonth() + 1).padStart(2, "0")
+    + "-"
+    + String(today.getDate()).padStart(2, "0");
     
 
 async function morningReminder() {//トリガーは毎日7:00に設定
@@ -27,11 +34,11 @@ async function morningReminder() {//トリガーは毎日7:00に設定
 
             const channelId = departmentPage.properties["DiscordChannelId"].rich_text[0]?.plain_text;
         
-            const message = await discord.sendMessage(channelId,task.toString());
+            const message = await discord.sendMessage(channelId,"⚠️本日予定のタスク⚠️\n"+ task.toStringmorning());
 
             await notion.createDiscordNotification({name:task.name, channelId:channelId, messageId:message.id,taskPageId:page.id});
 
-            if (DEBUG) {console.log(task.toString());}
+            if (DEBUG) {console.log(task.toStringmorning());}
         }
     }
 }
@@ -39,27 +46,52 @@ async function morningReminder() {//トリガーは毎日7:00に設定
 async function participantsUpdate(){//トリガーは毎５分に設定
     const notion = new NotionAPI();
     const discord = new DiscordAPI();
-    const notifications = await notion.getDiscordNortifications();
+    const notifications = await notion.getDiscordNotifications();
     const emoji = "✅";
     
     const totals = {};
+    const participants = {};
 
     for (const notification of notifications.results) {
         const channelId = notification.properties["DiscordChannelId"].rich_text[0]?.plain_text;
         const messageId = notification.properties["DiscordMessageId"].rich_text[0]?.plain_text;
         const reactionCount = await discord.getReactionCount(channelId,messageId,emoji)
         await notion.updateNotificationParticipantCount(notification.id,reactionCount);
+        
         const taskPageId = notification.properties["TaskPageId"].rich_text[0]?.plain_text;
         totals[taskPageId] = (totals[taskPageId]||0)+ reactionCount;
+        if (!participants[taskPageId]){
+            participants[taskPageId] = [];
+        }
+        
+        const users = await discord.getReactionUsers(channelId,messageId,emoji);
+        for (const user of users){
+            const result = await notion.getDiscordUsers(user.id)
+            
+            if (result.results.length === 0){
+                continue;
+            }
+            
+            const userPageId = result.results[0].id
+        
+            if(userPageId && !participants[taskPageId].includes(userPageId)){
+                participants[taskPageId].push(userPageId);
+            }
+        }
     }
 
-    console.log(totals);
-
+    for (const taskPageId in totals){
+        await notion.addParticipantsinTaskDatabase(taskPageId,participants[taskPageId]);
+    }
+        
     for (const taskPageId in totals){
         await notion.updateTaskCurrentCount(taskPageId, totals[taskPageId]);
     }
 
+    await notion.removeAvailableDate(userPageId, todayString);
 }
+
+
 
 async function checkTaskALert(){ // トリガーは毎分に設定
     const notion = new NotionAPI();
@@ -83,10 +115,10 @@ async function checkTaskALert(){ // トリガーは毎分に設定
             const is15 = diffMinutes <= 15 && diffMinutes >= 14;
             const is5 = diffMinutes <= 5 && diffMinutes >= 4;
 
-            if (is15 ||  is5) {
-                await discord.sendMessage(channelId, "⚠️間もなく開始⚠️\n" + task.toString() + "\n" + Math.round(diffMinutes) + "分後に開始予定");
+            if ((is15 ||  is5) && task.currentPeople < task.requiredPeople){
+                await discord.sendMessage(channelId, "⚠️間もなく開始⚠️\n" + task.toStringmorning() + "\n" + Math.round(diffMinutes) + "分後に開始予定");
 
-            if (DEBUG) {console.log(task.toString());}
+            if (DEBUG) {console.log(task.toStringmorning());}
             }
         }
     }
@@ -109,20 +141,22 @@ async function eveningReminder(){
 
             const channelId = departmentPage.properties["DiscordChannelId"].rich_text[0]?.plain_text;
         
-            const message = await discord.sendMessage(channelId,task.toString());
+            const message = await discord.sendMessage(channelId,"⚠️本日やりきれなかったタスク⚠️\n" + task.toStringevening());
 
-            if (DEBUG) {console.log(task.toString());}
+            if (DEBUG) {console.log(task.toStringevening());}
         }
     }
 
-    const notifications = await notion.getDiscordNortifications();
+    const notifications = await notion.getDiscordNotifications();
     for (const notification of notifications.results) {
-        await notion.deleteDiscordNortification(notification.id);
+        await notion.deleteDiscordNotification(notification.id);
     }
 }
 
+
+
 async function main() {
-    await participantsUpdate();
+    await eveningReminder();//トリガーは毎５分に設定
 }
 
 main();
