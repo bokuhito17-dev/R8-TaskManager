@@ -156,7 +156,39 @@ async function eveningReminder(){
 
 
 async function main() {
-    await eveningReminder();//トリガーは毎５分に設定
+    async function main() {
+
+    const mode = process.argv[2];
+
+    switch(mode){
+
+        case "morning":
+            await morningReminder();
+            break;
+
+        case "participants":
+            await participantsUpdate();
+            break;
+
+        case "alert":
+            await checkTaskALert();
+            break;
+
+        case "evening":
+            await eveningReminder();
+            break;
+
+        default:
+            console.log("使い方:");
+            console.log("node main.js morning");
+            console.log("node main.js participants");
+            console.log("node main.js alert");
+            console.log("node main.js evening");
+    }
+
+}
+
+main();
 }
 
 main();
