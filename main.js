@@ -88,7 +88,23 @@ async function participantsUpdate(){//トリガーは毎５分に設定
         await notion.updateTaskCurrentCount(taskPageId, totals[taskPageId]);
     }
 
-    await notion.removeAvailableDate(userPageId, todayString);
+const todayString = formattedDate;
+
+const updatedUsers = new Set();
+
+for (const taskPageId in participants) {
+
+    for (const userPageId of participants[taskPageId]) {
+
+        if (updatedUsers.has(userPageId)) continue;
+
+        await notion.removeAvailableDate(userPageId, todayString);
+
+        updatedUsers.add(userPageId);
+
+    }
+
+}
 }
 
 
