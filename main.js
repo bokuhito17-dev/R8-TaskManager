@@ -6,16 +6,9 @@ const axios = require("axios");
 
 const DEBUG = true;
 
-const today = new Date().toLocaleDateString("sv-SE", {
+const formattedDate = new Date().toLocaleDateString("sv-SE", {
     timeZone: "Asia/Tokyo"
-});;
-
-const formattedDate =
-    today.getFullYear()
-    + "-"
-    + String(today.getMonth() + 1).padStart(2, "0")
-    + "-"
-    + String(today.getDate()).padStart(2, "0");
+});
     
 
 async function morningReminder() {//トリガーは毎日7:00に設定
