@@ -6,7 +6,9 @@ const axios = require("axios");
 
 const DEBUG = true;
 
-const today = new Date();
+const today = new Date().toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Tokyo"
+});;
 
 const formattedDate =
     today.getFullYear()
