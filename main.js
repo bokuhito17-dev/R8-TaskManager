@@ -120,6 +120,11 @@ async function checkTaskALert(){ // トリガーは毎分に設定
             const channelId = departmentPage.properties["DiscordChannelId"].rich_text[0]?.plain_text;
                 
             const startTime = new Date(page.properties["取り組み予定日時"].date.start);
+
+            if (!startTime.includes("T"){
+                continue;
+            }
+            
             const diff = startTime -now;
             const diffMinutes = diff/(1000*60); 
 
