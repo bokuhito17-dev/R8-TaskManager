@@ -132,8 +132,12 @@ async function checkTaskALert(){ // トリガーは毎分に設定
             const is15 = diffMinutes <= 15 && diffMinutes >= 14;
             const is5 = diffMinutes <= 5 && diffMinutes >= 4;
 
-            if ((is15 ||  is5) && task.currentPeople < task.requiredPeople){
-                await discord.sendMessage(channelId, "⚠️間もなく開始⚠️\n" + task.toStringmorning() + "\n" + Math.round(diffMinutes) + "分後に開始予定");
+            if (is15 ||  is5) {
+                if(task.requiredPeople == null){
+                    await discord.sendMessage(channelId, "⚠️間もなく開始⚠️\n" + task.toStringmorning() + "\n" + Math.round(diffMinutes) + "分後に開始予定" +"\n"+ "⚠️人員不足状況は不明です（必要人数が設定されていません）");
+
+                else if(task.currentPeople < task.requiredPeople){
+                    await discord.sendMessage(channelId, "⚠️間もなく開始⚠️\n" + task.toStringmorning() + "\n" + Math.round(diffMinutes) + "分後に開始予定");
 
             if (DEBUG) {console.log(task.toStringmorning());}
             }
