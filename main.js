@@ -118,13 +118,14 @@ async function checkTaskALert(){ // トリガーは毎分に設定
         for (const department of page.properties["部門"].relation) {
             const departmentPage = await notion.getDepartment(department.id);
             const channelId = departmentPage.properties["DiscordChannelId"].rich_text[0]?.plain_text;
-                
+            
+            const dateString = page.properties["取り組み予定日時"].date.start;
+
+            if (!dateString.includes("T")) {
+                continue;
+            }   
             const startTime = new Date(page.properties["取り組み予定日時"].date.start);
 
-            if (!startTime.includes("T"){
-                continue;
-            }
-            
             const diff = startTime -now;
             const diffMinutes = diff/(1000*60); 
 
