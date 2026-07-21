@@ -3,7 +3,9 @@ name: Alert
 on:
 
   workflow_dispatch:
-
+concurrency:
+  group: discord-bot
+  cancel-in-progress: false
 jobs:
 
   run:
