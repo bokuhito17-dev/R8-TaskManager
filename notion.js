@@ -266,5 +266,18 @@ class NotionAPI {
         );
         return response.data;
     }
+    async getPage(pageId) {
+    const response = await axios.get(
+        `https://api.notion.com/v1/pages/${pageId}`,
+        {
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+                "Notion-Version": "2022-06-28"
+            }
+        }
+    );
+
+    return response.data;
+}
 }
 module.exports = NotionAPI;
