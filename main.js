@@ -116,31 +116,58 @@ async function checkTaskALert(){ // トリガーは毎分に設定
         const task = new Task(page);
 
         for (const department of page.properties["部門"].relation) {
+
             const departmentPage = await notion.getDepartment(department.id);
             const channelId = departmentPage.properties["DiscordChannelId"].rich_text[0]?.plain_text;
-            
+
             const dateString = page.properties["取り組み予定日時"].date.start;
 
+            // 時刻が設定されていない場合は通知しない
             if (!dateString.includes("T")) {
                 continue;
-            }   
-            const startTime = new Date(page.properties["取り組み予定日時"].date.start);
+            }
 
-            const diff = startTime -now;
-            const diffMinutes = diff/(1000*60); 
+            const startTime = new Date(dateString);
+
+            const diff = startTime - now;
+            const diffMinutes = diff / (1000 * 60);
 
             const is15 = diffMinutes <= 15 && diffMinutes >= 14;
             const is5 = diffMinutes <= 5 && diffMinutes >= 4;
 
-            if (is15 ||  is5) {
-                if(task.requiredPeople == null){
-                    await discord.sendMessage(channelId, "⚠️間もなく開始⚠️\n" + task.toStringmorning() + "\n" + Math.round(diffMinutes) + "分後に開始予定" +"\n"+ "⚠️人員不足状況は不明です（必要人数が設定されていません）");
+            if (is15 || is5) {
 
-                else if(task.currentPeople < task.requiredPeople){
-                    await discord.sendMessage(channelId, "⚠️間もなく開始⚠️\n" + task.toStringmorning() + "\n" + Math.round(diffMinutes) + "分後に開始予定");
+                if (task.requiredPeople == null) {
 
-            if (DEBUG) {console.log(task.toStringmorning());}
+                    await discord.sendMessage(
+                        channelId,
+                        "⚠️間もなく開始⚠️\n"
+                        + task.toStringmorning()
+                        + "\n"
+                        + Math.round(diffMinutes)
+                        + "分後に開始予定\n"
+                        + "⚠️人員不足状況は不明です（必要人数が設定されていません）"
+                    );
+
+                } else if (task.currentPeople < task.requiredPeople) {
+
+                    await discord.sendMessage(
+                        channelId,
+                        "⚠️間もなく開始⚠️\n"
+                        + task.toStringmorning()
+                        + "\n"
+                        + Math.round(diffMinutes)
+                        + "分後に開始予定"
+                    );
+
+                }
+
+                if (DEBUG) {
+                    console.log(task.toStringmorning());
+                }
+
             }
+
         }
     }
 }
