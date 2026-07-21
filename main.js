@@ -38,6 +38,10 @@ async function morningReminder() {//トリガーは毎日7:00に設定
     }
 }
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function participantsUpdate(){//トリガーは毎５分に設定
     const notion = new NotionAPI();
     const discord = new DiscordAPI();
@@ -58,6 +62,8 @@ async function participantsUpdate(){//トリガーは毎５分に設定
         if (!participants[taskPageId]){
             participants[taskPageId] = [];
         }
+
+        await sleep(300);
         
         const users = await discord.getReactionUsers(channelId,messageId,emoji);
         for (const user of users){
