@@ -199,29 +199,41 @@ class NotionAPI {
         return response.data;
     }
 
-    async addParticipantsinTaskDatabase(pageId,userIds){
+   async addParticipantsinTaskDatabase(pageId, userIds) {
+    try {
+
+        console.log("pageId:", pageId);
+        console.log("userIds:", userIds);
+
         const response = await axios.patch(
             `https://api.notion.com/v1/pages/${pageId}`,
             {
-                properties:{
-                    "参加者":{
-                        relation:userIds.map(id=>({
-                            id:id
+                properties: {
+                    "参加者": {
+                        relation: userIds.map(id => ({
+                            id: id
                         }))
                     }
                 }
             },
             {
-                headers:{
+                headers: {
                     Authorization: `Bearer ${this.token}`,
-                    "Notion-Version":"2022-06-28",
-                    "Content-Type":"application/json"
+                    "Notion-Version": "2022-06-28",
+                    "Content-Type": "application/json"
                 }
             }
         );
-        return response.data;
-    }
 
+        return response.data;
+
+    } catch (err) {
+
+        console.log(err.response?.data);
+
+        throw err;
+    }
+}
     async removeAvailableDate(userPageId, todayString){
         // Fetch the page to get current multi_select values
         const resp = await axios.get(
