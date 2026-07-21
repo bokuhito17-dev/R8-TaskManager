@@ -80,18 +80,37 @@ class DiscordAPI {
     }
     
     async getReactionUsers(channelId, messageId, emojiName) {
+    while (true) {
+        try {
+            const response = await axios.get(
+                `https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emojiName)}`,
+                {
+                    headers: {
+                        Authorization: `Bot ${this.token}`
+                    }
+                }
+            );
 
-    const response = await axios.get(
-        `https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emojiName)}`,
-        {
-            headers: {
-                Authorization: `Bot ${this.token}`
+            return response.data;
+
+        } catch (err) {
+
+            if (err.response?.status === 429) {
+
+                const wait =
+                    (err.response.data.retry_after ?? 2) * 1000;
+
+                console.log(`Rate limit. ${wait}ms待機`);
+
+                await sleep(wait);
+
+                continue;
             }
-        }
-    );
 
-    return response.data;
+            throw err;
+        }
     }
+}
 }
 
 module.exports = DiscordAPI;
