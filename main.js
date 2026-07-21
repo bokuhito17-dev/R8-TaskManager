@@ -43,6 +43,7 @@ function sleep(ms) {
 }
 
 async function participantsUpdate(){//トリガーは毎５分に設定
+    console.log("participants START", new Date().toISOString());
     const notion = new NotionAPI();
     const discord = new DiscordAPI();
     const notifications = await notion.getDiscordNotifications();
@@ -111,6 +112,7 @@ for (const taskPageId in participants) {
 
 
 async function checkTaskALert(){ // トリガーは毎分に設定
+    console.log("participants START", new Date().toISOString());
     const notion = new NotionAPI();
     const discord = new DiscordAPI();
     const now = new Date();
