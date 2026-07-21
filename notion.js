@@ -229,45 +229,12 @@ class NotionAPI {
 
     } catch (err) {
 
+        console.log("Notion Error:");
         console.log(err.response?.data);
 
         throw err;
     }
 }
-    async removeAvailableDate(userPageId, todayString){
-        // Fetch the page to get current multi_select values
-        const resp = await axios.get(
-            `https://api.notion.com/v1/pages/${userPageId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${CONFIG.NOTION_TOKEN}`,
-                    "Notion-Version": "2022-06-28"
-                }
-            }
-        );
-
-        const user = resp.data;
-        const dates = user.properties["来れる日"].multi_select || [];
-        const newDates = dates.filter(date => date.name !== todayString);
-
-        await axios.patch(
-            `https://api.notion.com/v1/pages/${userPageId}`,
-            {
-                properties:{
-                    "来れる日":{
-                        multi_select: newDates.map(date => ({ name: date.name }))
-                    }
-                }
-            },
-            {
-                headers:{
-                    Authorization:`Bearer ${CONFIG.NOTION_TOKEN}`,
-                    "Notion-Version":"2022-06-28",
-                    "Content-Type":"application/json"
-                }
-            }
-        );
-    }
     async getUserAvailable (pageId){
     const response = await axios.get(
         `https://api.notion.com/v1/pages/${pageId}`,
