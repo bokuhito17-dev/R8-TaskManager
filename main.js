@@ -99,18 +99,19 @@ const todayString = formattedDate;
 
 const updatedUsers = new Set();
 
-for (const taskPageId in participants) {
+for (const taskPageId in totals) {
 
-    for (const userPageId of participants[taskPageId]) {
+    const page = await notion.getPage(taskPageId);
 
-        if (updatedUsers.has(userPageId)) continue;
-
-        await notion.removeAvailableDate(userPageId, todayString);
-
-        updatedUsers.add(userPageId);
-
+    if (page.archived || page.in_trash) {
+        console.log("削除済みなのでスキップ:", taskPageId);
+        continue;
     }
 
+    await notion.addParticipantsinTaskDatabase(
+        taskPageId,
+        participants[taskPageId]
+    );
 }
 }
 
