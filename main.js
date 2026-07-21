@@ -81,9 +81,10 @@ async function participantsUpdate(){//トリガーは毎５分に設定
             }
         }
     }
-console.log(taskPageId);
-console.log(participants[taskPageId]);
+
     for (const taskPageId in totals){
+        console.log(taskPageId);
+　　　　　console.log(participants[taskPageId]);
         await notion.addParticipantsinTaskDatabase(taskPageId,participants[taskPageId]);
     }
         
