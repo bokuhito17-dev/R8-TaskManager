@@ -18,8 +18,8 @@ class Task {
         this.discordMessageId 
         = page.properties["DiscordMessageId"].rich_text[0]?.plain_text ?? null;
         
-        this.place
-        = page.properties["場所"].rich_text[0]?.plain_text ?? null;
+        this.place =
+    page.properties["場所"].rich_text?.[0]?.plain_text ?? null;
     }
 
     toStringmorning(){
