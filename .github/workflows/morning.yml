@@ -3,7 +3,11 @@ name: Morning Reminder
 on:
   
   workflow_dispatch:
-
+  
+concurrency:
+  group: discord-bot
+  cancel-in-progress: false
+  
 jobs:
   run:
 
