@@ -250,6 +250,43 @@ class NotionAPI {
     return response.data;
 }
 
+    async removeAvailableDate(pageId, targetDate) {
+
+    // 現在のユーザー情報を取得
+    const page = await this.getUserAvailable(pageId);
+
+    const current =
+        page.properties["来れる日"].multi_select;
+
+    // targetDate以外を残す
+    const updated = current
+        .filter(item => item.name !== targetDate)
+        .map(item => ({
+            name: item.name
+        }));
+
+    // 更新
+    const response = await axios.patch(
+        `https://api.notion.com/v1/pages/${pageId}`,
+        {
+            properties: {
+                "来れる日": {
+                    multi_select: updated
+                }
+            }
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+                "Notion-Version": "2022-06-28",
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    return response.data;
+}
+
     async deleteDiscordNotification(pageId){
         const response = await axios.patch(
             `https://api.notion.com/v1/pages/${pageId}`,
