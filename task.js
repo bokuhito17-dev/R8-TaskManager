@@ -2,24 +2,20 @@ class Task {
 
     constructor(page) {
         
-        this.name 
-        = page.properties["名前"].title[0].plain_text;
-
-
         this.requiredPeople
-        = page.properties["必要人数"].number;
+        = page.properties["必要人数"].number ?? null;
 
         this.currentPeople
-        = page.properties["現在人数"].number;
+        = page.properties["現在人数"].number ?? null;
 
         this.deadline
         = page.properties["期限"].date?.start ?? null;
 
         this.discordMessageId 
-        = page.properties["DiscordMessageId"].rich_text[0]?.plain_text ?? null;
+        = page.properties["DiscordMessageId"].rich_text?.[0]?.plain_text ?? null;
         
-        this.place =
-    page.properties["場所"].rich_text?.[0]?.plain_text ?? null;
+        this.place
+        = page.properties["場所"].rich_text?.[0]?.plain_text ?? null;
     }
 
     toStringmorning(){
