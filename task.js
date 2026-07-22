@@ -1,6 +1,8 @@
 class Task {
 
     constructor(page) {
+        this.name 
+    　　= page.properties["タスク名"].title?.[0]?.plain_text ?? null;
         
         this.requiredPeople
         = page.properties["必要人数"].number ?? null;
