@@ -152,6 +152,7 @@ async function participantsUpdate(){ // トリガーは毎5分に設定
                 continue;
             }
 
+            console.log("removeAvailableDate実行",userPageId,todayString);
             await notion.removeAvailableDate(
                 userPageId,
                 todayString
