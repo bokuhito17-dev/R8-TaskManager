@@ -43,13 +43,18 @@ function sleep(ms) {
 }
 
 async function participantsUpdate(){ // トリガーは毎5分に設定
+
     const notion = new NotionAPI();
     const discord = new DiscordAPI();
+
     const notifications = await notion.getDiscordNotifications();
     const emoji = "✅";
 
     const totals = {};
     const participants = {};
+
+    console.log("===== participantsUpdate START =====");
+
 
     for (const notification of notifications.results) {
 
@@ -59,71 +64,181 @@ async function participantsUpdate(){ // トリガーは毎5分に設定
         const messageId =
             notification.properties["DiscordMessageId"].rich_text[0]?.plain_text;
 
+        const taskPageId =
+            notification.properties["TaskPageId"].rich_text[0]?.plain_text;
+
+
+        console.log("----------------------------");
+        console.log("taskPageId:", taskPageId);
+        console.log("channelId:", channelId);
+        console.log("messageId:", messageId);
+
+
         const reactionCount =
-            await discord.getReactionCount(channelId, messageId, emoji);
+            await discord.getReactionCount(
+                channelId,
+                messageId,
+                emoji
+            );
+
+
+        console.log(
+            "リアクション数:",
+            reactionCount
+        );
+
 
         await notion.updateNotificationParticipantCount(
             notification.id,
             reactionCount
         );
 
-        const taskPageId =
-            notification.properties["TaskPageId"].rich_text[0]?.plain_text;
 
         totals[taskPageId] =
             (totals[taskPageId] || 0) + reactionCount;
+
 
         if (!participants[taskPageId]) {
             participants[taskPageId] = [];
         }
 
+
         await sleep(300);
 
+
         const users =
-            await discord.getReactionUsers(channelId, messageId, emoji);
+            await discord.getReactionUsers(
+                channelId,
+                messageId,
+                emoji
+            );
+
+
+        console.log(
+            "Discord取得ユーザー数:",
+            users.length
+        );
+
 
         for (const user of users) {
 
-            const result = await notion.getDiscordUsers(user.id);
+
+            console.log(
+                "Discord取得ユーザーID:",
+                user.id
+            );
+
+
+            const result =
+                await notion.getDiscordUsers(user.id);
+
+
+            console.log(
+                "Notion検索結果件数:",
+                result.results.length
+            );
+
 
             if (result.results.length === 0) {
+
+                console.log(
+                    "Notionユーザー未登録:",
+                    user.id
+                );
+
                 continue;
             }
 
-            const userPageId = result.results[0].id;
+
+            const userPageId =
+                result.results[0].id;
+
+
+            console.log(
+                "NotionユーザーID:",
+                userPageId
+            );
+
 
             if (
                 userPageId &&
                 !participants[taskPageId].includes(userPageId)
             ) {
-                participants[taskPageId].push(userPageId);
+
+                participants[taskPageId].push(
+                    userPageId
+                );
+
+                console.log(
+                    "participants追加:",
+                    userPageId
+                );
             }
         }
     }
 
+
+    console.log("============================");
+    console.log(
+        "participants最終確認:"
+    );
+
+    console.log(
+        JSON.stringify(
+            participants,
+            null,
+            2
+        )
+    );
+
+
     // ============================
-    // タスクDB更新（アーカイブ済みはスキップ）
+    // タスクDB更新
     // ============================
 
     for (const taskPageId in totals) {
 
-        console.log(taskPageId);
-        console.log(participants[taskPageId]);
 
-        const page = await notion.getPage(taskPageId);
+        console.log(
+            "task更新:",
+            taskPageId
+        );
 
-        console.log(page.archived);
-        console.log(page.in_trash);
 
-        if (page.archived || page.in_trash) {
-            console.log("削除済みなのでスキップ:", taskPageId);
+        const page =
+            await notion.getPage(taskPageId);
+
+
+        console.log(
+            "archived:",
+            page.archived
+        );
+
+        console.log(
+            "trash:",
+            page.in_trash
+        );
+
+
+        if (
+            page.archived ||
+            page.in_trash
+        ) {
+
+            console.log(
+                "削除済みなのでスキップ:",
+                taskPageId
+            );
+
             continue;
         }
+
 
         await notion.addParticipantsinTaskDatabase(
             taskPageId,
             participants[taskPageId]
         );
+
 
         await notion.updateTaskCurrentCount(
             taskPageId,
@@ -131,54 +246,88 @@ async function participantsUpdate(){ // トリガーは毎5分に設定
         );
     }
 
+
+
     // ============================
-    // 来れる日を削除
+    // 来れる日削除
     // ============================
 
-// ============================
-// 来れる日を削除
-// ============================
+    const todayString = formattedDate;
 
-const todayString = formattedDate;
-const updatedUsers = new Set();
+    const updatedUsers = new Set();
 
-console.log("participants中身確認");
-console.log(JSON.stringify(participants, null, 2));
 
-for (const taskPageId in participants) {
+    console.log(
+        "来れる日削除開始"
+    );
 
-    console.log("task処理開始:", taskPageId);
 
-    const page = await notion.getPage(taskPageId);
+    for (const taskPageId in participants) {
 
-    if (page.archived || page.in_trash) {
-        continue;
-    }
 
-    for (const userPageId of participants[taskPageId]) {
+        console.log(
+            "削除対象task:",
+            taskPageId
+        );
 
-        console.log("ユーザー処理:", userPageId);
 
-        if (updatedUsers.has(userPageId)) {
+        const page =
+            await notion.getPage(taskPageId);
+
+
+        if (
+            page.archived ||
+            page.in_trash
+        ) {
             continue;
         }
 
-        console.log(
-            "removeAvailableDate実行",
-            userPageId,
-            todayString
-        );
 
-        await notion.removeAvailableDate(
-            userPageId,
-            todayString
-        );
 
-        updatedUsers.add(userPageId);
+        for (
+            const userPageId of participants[taskPageId]
+        ) {
+
+
+            console.log(
+                "削除対象user:",
+                userPageId
+            );
+
+
+            if (
+                updatedUsers.has(userPageId)
+            ) {
+
+                continue;
+            }
+
+
+
+            console.log(
+                "removeAvailableDate実行",
+                userPageId,
+                todayString
+            );
+
+
+            await notion.removeAvailableDate(
+                userPageId,
+                todayString
+            );
+
+
+            updatedUsers.add(
+                userPageId
+            );
+        }
     }
-}
-}
 
+
+    console.log(
+        "===== participantsUpdate END ====="
+    );
+}
 async function checkTaskALert(){ // トリガーは毎分に設定
     console.log("participants START", new Date().toISOString());
     const notion = new NotionAPI();
