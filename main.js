@@ -135,32 +135,48 @@ async function participantsUpdate(){ // トリガーは毎5分に設定
     // 来れる日を削除
     // ============================
 
-    const todayString = formattedDate;
-    const updatedUsers = new Set();
+// ============================
+// 来れる日を削除
+// ============================
 
-    for (const taskPageId in participants) {
+const todayString = formattedDate;
+const updatedUsers = new Set();
 
-        const page = await notion.getPage(taskPageId);
+console.log("participants中身確認");
+console.log(JSON.stringify(participants, null, 2));
 
-        if (page.archived || page.in_trash) {
+for (const taskPageId in participants) {
+
+    console.log("task処理開始:", taskPageId);
+
+    const page = await notion.getPage(taskPageId);
+
+    if (page.archived || page.in_trash) {
+        continue;
+    }
+
+    for (const userPageId of participants[taskPageId]) {
+
+        console.log("ユーザー処理:", userPageId);
+
+        if (updatedUsers.has(userPageId)) {
             continue;
         }
 
-        for (const userPageId of participants[taskPageId]) {
+        console.log(
+            "removeAvailableDate実行",
+            userPageId,
+            todayString
+        );
 
-            if (updatedUsers.has(userPageId)) {
-                continue;
-            }
+        await notion.removeAvailableDate(
+            userPageId,
+            todayString
+        );
 
-            console.log("removeAvailableDate実行",userPageId,todayString);
-            await notion.removeAvailableDate(
-                userPageId,
-                todayString
-            );
-
-            updatedUsers.add(userPageId);
-        }
+        updatedUsers.add(userPageId);
     }
+}
 }
 
 async function checkTaskALert(){ // トリガーは毎分に設定
